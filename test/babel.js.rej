@@ -1,0 +1,7 @@
+diff a/test/babel.js b/test/babel.js	(rejected hunks)
+@@ -29 +29,4 @@ describe('Babel feature', () => {
+-      assert.fileContent('gulpfile.js', "gulp.parallel('styles', 'scripts', 'fonts')");
++      assert.fileContent(
++        'gulpfile.js',
++        "gulp.parallel('styles', 'scripts', 'fonts')"
++      );
