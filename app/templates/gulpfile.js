@@ -3,12 +3,16 @@ const gulp = require('gulp');
 const gulpLoadPlugins = require('gulp-load-plugins');
 const browserSync = require('browser-sync').create();
 const del = require('del');
-const runSequence = require('run-sequence');
 const autoprefixer = require('autoprefixer');
-const cssnano = require('cssnano');
+const cssnano = require('gulp-cssnano');
 const { argv } = require('yargs');
 
-const $ = gulpLoadPlugins();
+const $ = gulpLoadPlugins({
+  rename: {
+    'gulp-rev-rewrite': 'revRewrite',
+    'gulp-rev-delete-original': 'revDelete'
+  }
+});
 const reload = browserSync.reload;
 
 let dev = true;
@@ -63,14 +67,14 @@ gulp.task('lint:test', () => {
 });
 
 <% if (includeBabel) { -%>
-gulp.task('html', ['styles', 'scripts'], () => {
+gulp.task('html', gulp.series(gulp.parallel('styles', 'scripts'), () => {
 <% } else { -%>
-gulp.task('html', ['styles'], () => {
+gulp.task('html', gulp.series('styles', () => {
 <% } -%>
   return gulp.src('app/*.html')
     .pipe($.useref({searchPath: ['.tmp', 'app', '.']}))
     .pipe($.if(/\.js$/, $.uglify({compress: {drop_console: true}})))
-    .pipe($.if(/\.css$/, $.postcss([cssnano({safe: true, autoprefixer: false})])))
+    .pipe($.if(/\.css$/, $.cssnano({safe: true, autoprefixer: false})))
     .pipe($.if(/\.html$/, $.htmlmin({
       collapseWhitespace: true,
       minifyCSS: true,
@@ -81,7 +85,19 @@ gulp.task('html', ['styles'], () => {
       removeScriptTypeAttributes: true,
       removeStyleLinkTypeAttributes: true
     })))
+    <% if (ossRoot) { -%>
+    .pipe($.replace(/\.\/assets\//g, _ => `<%= ossRoot %>/assets/`))
+    .pipe($.replace(/\.\/images\//g, _ => `<%= ossRoot %>/images/`))
+    .pipe($.replace(/\/bower_components\//g, _ => `<%= ossRoot %>/bower_components/`))
+    .pipe($.replace(/\/vendors\//g, _ => `<%= ossRoot %>/vendors/`))
+    <% } -%>
     .pipe(gulp.dest('dist'));
+}));
+
+gulp.task('assets', () => {
+  return gulp.src('app/assets/**/*')
+    .pipe($.cache($.imagemin()))
+    .pipe(gulp.dest('dist/assets'));
 });
 
 gulp.task('images', () => {
@@ -106,8 +122,31 @@ gulp.task('extras', () => {
 
 gulp.task('clean', del.bind(null, ['.tmp', 'dist']));
 
-gulp.task('serve', () => {
-  runSequence('clean', ['styles'<% if (includeBabel) { %>, 'scripts'<% } %>, 'fonts'], () => {
+gulp.task('revision', () => {
+  return gulp.src('dist/**/*.{css,js}')
+    .pipe($.rev())
+    .pipe($.revDelete()) // Remove the unrevved files
+    .pipe(gulp.dest('dist'))
+    .pipe($.rev.manifest())
+    .pipe(gulp.dest('dist'));
+});
+
+gulp.task('revRewrite', gulp.series('revision', function() {
+    const manifest = gulp.src('dist/rev-manifest.json');
+    return gulp.src('dist/*.html')
+      .pipe($.revRewrite({ manifest }))
+      .pipe(gulp.dest('dist'));
+}));
+
+function calcSize(){
+  return gulp.src('dist/**/*').pipe($.size({title: 'build', gzip: true})); 
+}
+
+gulp.task('build', gulp.series(gulp.parallel('lint', 'html', 'images', 'assets', 'fonts', 'extras'), calcSize));
+
+gulp.task('default', gulp.series('clean', 'build', 'revRewrite'))
+
+gulp.task('serve', gulp.series(gulp.parallel('styles'<% if (includeBabel) { %>, 'scripts'<% } %>, 'fonts'), 'clean', () => {
     browserSync.init({
       notify: false,
       port,
@@ -128,32 +167,28 @@ gulp.task('serve', () => {
       '.tmp/fonts/**/*'
     ]).on('change', reload);
 
-    gulp.watch('app/styles/**/*.<%= includeSass ? 'scss' : 'css' %>', ['styles']);
+    gulp.watch('app/styles/**/*.<%= includeSass ? 'scss' : 'css' %>', gulp.series('styles'));
 <% if (includeBabel) { -%>
-    gulp.watch('app/scripts/**/*.js', ['scripts']);
+    gulp.watch('app/scripts/**/*.js', gulp.series('scripts'));
 <% } -%>
-    gulp.watch('app/fonts/**/*', ['fonts']);
-  });
-});
+    gulp.watch('app/fonts/**/*', gulp.series('fonts'));
+}));
 
-gulp.task('serve:dist', ['default'], () => {
+gulp.task('serve:dist', gulp.series('default', () => {
   browserSync.init({
     notify: false,
     port,
     server: {
       baseDir: ['dist'],
         routes: {
-          '/node_modules': 'node_modules'
+          '/node_modules': 'node_modules',
+          '/vendors': 'vendors'
         }
     }
   });
-});
+}));
 
-<% if (includeBabel) { -%>
-gulp.task('serve:test', ['scripts'], () => {
-<% } else { -%>
-gulp.task('serve:test', () => {
-<% } -%>
+gulp.task('serve:test', gulp.series('scripts', () => {
   browserSync.init({
     notify: false,
     port,
@@ -166,27 +201,15 @@ gulp.task('serve:test', () => {
 <% } else { -%>
         '/scripts': 'app/scripts',
 <% } -%>
-        '/node_modules': 'node_modules'
+        '/node_modules': 'node_modules',
+        '/vendors': 'vendors'
       }
     }
   });
 
 <% if (includeBabel) { -%>
-  gulp.watch('app/scripts/**/*.js', ['scripts']);
+  gulp.watch('app/scripts/**/*.js', gulp.series('scripts'));
 <% } -%>
   gulp.watch(['test/spec/**/*.js', 'test/index.html']).on('change', reload);
-  gulp.watch('test/spec/**/*.js', ['lint:test']);
-});
-
-gulp.task('build', ['lint', 'html', 'images', 'fonts', 'extras'], () => {
-  return gulp.src('.tmp/**/*')
-      .pipe(gulp.dest('dist'))
-      .pipe($.size({title: 'build', gzip: true}));
-});
-
-gulp.task('default', () => {
-  return new Promise(resolve => {
-    dev = false;
-    runSequence('clean', 'build', resolve);
-  });
-});
+  gulp.watch('test/spec/**/*.js', gulp.series('lint:test'));
+}));

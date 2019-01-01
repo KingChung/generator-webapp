@@ -29,7 +29,7 @@ module.exports = class extends Generator {
     if (!this.options['skip-welcome-message']) {
       this.log(
         yosay(
-          "'Allo 'allo! Out of the box I include HTML5 Boilerplate, jQuery, and a gulpfile to build your app."
+          "'Allo 'allo! Out of the box I include HTML5 Boilerplate, JQuery, and a gulpfile to build your app."
         )
       );
     }
@@ -43,8 +43,9 @@ module.exports = class extends Generator {
       this.includeSass = hasFeature('includeSass');
       this.includeBootstrap = hasFeature('includeBootstrap');
       this.includeModernizr = hasFeature('includeModernizr');
-      this.includeAnalytics = hasFeature('includeAnalytics');
+      this.includeWeixinSDK = hasFeature('includeWeixinSDK');
       this.includeJQuery = answers.includeJQuery;
+      this.ossRoot = answers.ossRoot;
     });
   }
 
@@ -60,7 +61,8 @@ module.exports = class extends Generator {
       testFramework: this.options['test-framework'],
       includeJQuery: this.includeJQuery,
       includeModernizr: this.includeModernizr,
-      includeAnalytics: this.includeAnalytics
+      includeWeixinSDK: this.includeWeixinSDK,
+      ossRoot: this.ossRoot
     };
 
     const copy = (input, output) => {

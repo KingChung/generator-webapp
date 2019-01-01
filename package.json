@@ -1,10 +1,10 @@
 {
-  "name": "generator-webapp",
-  "version": "3.0.1",
+  "name": "generator-h5",
+  "version": "0.1.0",
   "description": "Scaffold out a front-end web app",
   "license": "BSD-2-Clause",
-  "repository": "yeoman/generator-webapp",
-  "author": "The Yeoman Team",
+  "repository": "https://github.com/KingChung/generator-webapp.git",
+  "author": "KingChung",
   "main": "app/index.js",
   "engines": {
     "node": ">=6"

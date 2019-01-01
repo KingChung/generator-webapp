@@ -41,21 +41,26 @@ module.exports = {
           checked: true
         },
         {
-          name: 'Google Analytics',
-          value: 'includeAnalytics',
-          checked: true
+          name: 'Weixin SDK',
+          value: 'includeWeixinSDK',
+          checked: false
         }
       ]
     },
     {
       type: 'confirm',
       name: 'includeJQuery',
-      message: 'Would you like to include jQuery?',
+      message: 'Would you like to include JQuery?',
       default: true,
       when: answers => !answers.features.includes('includeBootstrap')
+    },
+    {
+      type: 'input',
+      name: 'ossRoot',
+      message: 'Would you like to use OSS?'
     }
   ],
-  dirsToCreate: ['app/images', 'app/fonts'],
+  dirsToCreate: ['app/images', 'app/fonts', 'app/assets', 'vendors'],
   filesToCopy: [
     {
       input: 'babelrc',
