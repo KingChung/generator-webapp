@@ -93,8 +93,9 @@
     "rules": {
       "no-console": "warn"
     }
-  },
+  }<%_ if (includeModernizr) { %>,
   "eslintIgnore": [
     "modernizr.js"
   ]
+  <% } %>
 }

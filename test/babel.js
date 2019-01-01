@@ -59,8 +59,8 @@ describe('Babel feature', () => {
     });
 
     it("shouldn't add the scripts task", () => {
-      assert.noFileContent('gulpfile.js', "gulp.task('scripts')");
-      assert.fileContent('gulpfile.js', "gulp.parallel('styles')");
+      assert.noFileContent('gulpfile.js', "gulp.task('scripts'");
+      assert.fileContent('gulpfile.js', "gulp.series('styles'");
       assert.fileContent('gulpfile.js', "gulp.parallel('styles', 'fonts')");
       assert.fileContent('gulpfile.js', "'app/scripts/**/*.js',");
       assert.noFileContent(
