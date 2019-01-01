@@ -25,8 +25,11 @@ describe('Babel feature', () => {
 
     it('should add the scripts task', () => {
       assert.fileContent('gulpfile.js', "gulp.task('scripts'");
-      assert.fileContent('gulpfile.js', "['styles', 'scripts']");
-      assert.fileContent('gulpfile.js', "['styles', 'scripts', 'fonts']");
+      assert.fileContent('gulpfile.js', "gulp.parallel('styles', 'scripts')");
+      assert.fileContent(
+        'gulpfile.js',
+        "gulp.parallel('styles', 'scripts', 'fonts')"
+      );
       assert.fileContent(
         'gulpfile.js',
         "gulp.watch('app/scripts/**/*.js', ['scripts'])"
@@ -57,12 +60,12 @@ describe('Babel feature', () => {
 
     it("shouldn't add the scripts task", () => {
       assert.noFileContent('gulpfile.js', "gulp.task('scripts'");
-      assert.fileContent('gulpfile.js', "['styles']");
-      assert.fileContent('gulpfile.js', "['styles', 'fonts']");
+      assert.fileContent('gulpfile.js', "gulp.parallel('styles')");
+      assert.fileContent('gulpfile.js', "gulp.parallel('styles', 'fonts')");
       assert.fileContent('gulpfile.js', "'app/scripts/**/*.js',");
       assert.noFileContent(
         'gulpfile.js',
-        "gulp.watch('app/scripts/**/*.js', ['scripts'])"
+        "gulp.watch('app/scripts/**/*.js', gulp.series('scripts'))"
       );
       assert.fileContent('gulpfile.js', "'/scripts': 'app/scripts',");
     });
