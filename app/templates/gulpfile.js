@@ -146,7 +146,7 @@ gulp.task('build', gulp.series(gulp.parallel('lint', 'html', 'images', 'assets',
 
 gulp.task('default', gulp.series('clean', 'build', 'revRewrite'))
 
-gulp.task('serve', gulp.series(gulp.parallel('styles'<% if (includeBabel) { %>, 'scripts'<% } %>, 'fonts'), 'clean', () => {
+gulp.task('serve', gulp.series('clean', gulp.parallel('styles'<% if (includeBabel) { %>, 'scripts'<% } %>, 'fonts'), () => {
     browserSync.init({
       notify: false,
       port,
